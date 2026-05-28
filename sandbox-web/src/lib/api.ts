@@ -187,6 +187,15 @@ export interface LeaderboardEntry {
   rank: number
 }
 
+export interface ApiKey {
+  id: string
+  name: string
+  key_prefix: string
+  created_at: string
+  expires_at: string | null
+  raw_key?: string
+}
+
 // ---------------------------------------------------------------------------
 // API client factory
 // ---------------------------------------------------------------------------
@@ -324,6 +333,24 @@ export function createSandboxApiClient(token: string | null) {
       ),
 
     health: () => fetchApi<{ status: string; service: string }>("/health"),
+
+    // ── API Keys ─────────────────────────────────────────────────────────────
+    createApiKey: (name: string) =>
+      fetchApi<ApiKey>(
+        "/api/sandbox/api-keys",
+        { method: "POST", body: JSON.stringify({ name }) },
+        t
+      ),
+
+    listApiKeys: () =>
+      fetchApi<ApiKey[]>("/api/sandbox/api-keys", undefined, t),
+
+    revokeApiKey: (keyId: string) =>
+      fetchApi<void>(
+        `/api/sandbox/api-keys/${keyId}`,
+        { method: "DELETE" },
+        t
+      ),
   }
 }
 

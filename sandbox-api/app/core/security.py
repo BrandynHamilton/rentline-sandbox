@@ -81,16 +81,21 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
             # DB-backed user keys (rl_...) — checked first, before GET bypass,
             # so that request.state.user is populated for protected GET routes.
-            if api_key and api_key.startswith("rl_"):
+            if api_key and api_key.startswith("sb_"):
                 from app.api.routes.api_keys import verify_user_api_key
                 db = SessionLocal()
                 try:
                     user = verify_user_api_key(api_key, db)
+                    # Read clerk_user_id while the session is still open to avoid DetachedInstanceError
+                    clerk_user_id = user.clerk_user_id if user is not None else None
                 finally:
                     db.close()
                 if user is None:
                     raise HTTPException(status_code=401, detail="Invalid or expired API key")
                 request.state.user = user
+                # Populate clerk_user_id so player routes (_clerk_id) work
+                # verify_user_api_key guarantees clerk_user_id is non-null (synthetic if needed)
+                request.state.clerk_user_id = clerk_user_id
                 return await call_next(request)
 
             # Skip if no static keys configured at all (dev mode)

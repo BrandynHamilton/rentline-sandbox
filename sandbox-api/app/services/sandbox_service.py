@@ -47,6 +47,17 @@ from app.services.sandbox_engine import _compute_nav
 
 
 # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _require_game(db: Session, game_id: str) -> SandboxGame:
+    game = db.get(SandboxGame, game_id)
+    if not game:
+        raise ValueError(f"Game {game_id!r} not found")
+    return game
+
+
+# ---------------------------------------------------------------------------
 # Game lifecycle
 # ---------------------------------------------------------------------------
 
@@ -1272,10 +1283,6 @@ def get_debt_summary(db: Session, game_id: str, player_id: str) -> list[dict]:
             "closing_cost_paid": m.closing_cost_paid,
         })
     return result
-    game = db.get(SandboxGame, game_id)
-    if not game:
-        raise ValueError(f"Game {game_id!r} not found")
-    return game
 
 
 def _require_player(db: Session, game_id: str, clerk_user_id: str) -> SandboxPlayer:

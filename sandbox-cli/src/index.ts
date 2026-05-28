@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * index.ts — CLI entry point
  *
@@ -26,10 +25,11 @@ if (args[0] === "setup" || args[0] === "--setup") {
 
 if (args.length === 0 || args[0] === "server" || args[0] === "--server") {
   // Default: start MCP server via stdio
+  // startServer() connects the stdio transport and returns — the event loop keeps the process alive.
+  // Do NOT call process.exit() and do NOT fall through to Commander.
   const { startServer } = await import("./server.js");
   await startServer();
-  process.exit(0);
-}
+} else {
 
 // ── CLI mode ─────────────────────────────────────────────────────────────────
 
@@ -65,3 +65,4 @@ program
   });
 
 await program.parseAsync(process.argv);
+}

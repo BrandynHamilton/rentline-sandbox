@@ -93,6 +93,13 @@ class SandboxGame(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
                                                   onupdate=datetime.utcnow)
 
+    # Autonomous mode — game advances turns automatically without host input
+    auto_advance: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # When True, the background runner will advance this game each turn automatically.
+    auto_advance_delay_seconds: Mapped[int] = mapped_column(Integer, default=30, nullable=False)
+    # Seconds to wait between turns in autonomous mode (default: 30s).
+    # Minimum 5s to avoid hammering the engine. Set to 0 to advance as fast as possible.
+
     # Relationships
     players: Mapped[list["SandboxPlayer"]] = relationship(
         "SandboxPlayer", back_populates="game", cascade="all, delete-orphan"
@@ -135,6 +142,15 @@ class SandboxPlayer(Base):
     is_ready: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_host: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Bot player fields — null for human players
+    is_bot: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # True = this player is an LLM-driven bot, not a real Clerk user
+    bot_strategy: Mapped[str | None] = mapped_column(String, nullable=True)
+    # "aggressive" | "conservative" | "balanced" | "momentum" | "income"
+    # Controls the system prompt persona given to the LLM
+    bot_personality: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Free-text name/flavour for the bot's character, e.g. "Gordon Gecko", "Warren Buffett"
 
     # Relationships
     game: Mapped["SandboxGame"] = relationship("SandboxGame", back_populates="players")

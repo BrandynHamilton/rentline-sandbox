@@ -62,5 +62,17 @@ class Settings:
     RENTLINE_API_URL: str = os.getenv("RENTLINE_API_URL", "")
     RENTLINE_SANDBOX_BRIDGE_KEY: str = os.getenv("RENTLINE_SANDBOX_BRIDGE_KEY", "")
 
+    # AI bot players (optional)
+    # When set, bot players in games will use the OpenAI API to make decisions each turn.
+    # Leave blank to disable — bots will make random decisions instead.
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+
+    # Autonomous game runner
+    # Default delay between turns for games in autonomous mode (seconds).
+    # Individual games can override this via the start_autonomous endpoint.
+    SANDBOX_AUTO_ADVANCE_DELAY: int = int(os.getenv("SANDBOX_AUTO_ADVANCE_DELAY", "30"))
+
 
 settings = Settings()

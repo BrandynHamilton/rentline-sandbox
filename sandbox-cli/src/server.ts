@@ -120,6 +120,7 @@ export async function startServer(): Promise<void> {
             fed_meeting_interval: a.fed_meeting_interval as number | undefined,
             fed_rate_current: a.fed_rate_current as number | undefined,
             property_ids: a.property_ids as string[] | undefined,
+            bots: a.bots as Array<{ display_name: string; strategy?: string; personality?: string }> | undefined,
           }));
 
         case "join_game":
@@ -200,6 +201,27 @@ export async function startServer(): Promise<void> {
           return a.game_id
             ? ok(await client.getLeaderboard(a.game_id as string))
             : ok(await client.getGlobalLeaderboard((a.limit as number | undefined) ?? 50));
+
+        // ── Bots ──────────────────────────────────────────────────────────
+        case "add_bot":
+          return ok(await client.addBot(a.game_id as string, {
+            display_name: a.display_name as string,
+            strategy: a.strategy as string | undefined,
+            personality: a.personality as string | undefined,
+          }));
+
+        case "remove_bot":
+          return ok(await client.removeBot(a.game_id as string, a.bot_player_id as string));
+
+        // ── Autonomous mode ────────────────────────────────────────────────
+        case "start_autonomous":
+          return ok(await client.startAutonomous(
+            a.game_id as string,
+            a.delay_seconds as number | undefined,
+          ));
+
+        case "stop_autonomous":
+          return ok(await client.stopAutonomous(a.game_id as string));
 
         default:
           return err(`Unknown tool: ${name}`);

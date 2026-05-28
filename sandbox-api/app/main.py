@@ -81,9 +81,11 @@ app.add_middleware(ClerkAuthMiddleware)
 from app.api.routes.health import router as health_router
 from app.api.routes.sandbox import router as sandbox_router
 from app.api.routes.ws import router as ws_router
+from app.api.routes.api_keys import router as api_keys_router
 
 app.include_router(health_router)
 app.include_router(sandbox_router, prefix="/api")
+app.include_router(api_keys_router, prefix="/api")
 app.include_router(ws_router, prefix="/api")
 
 
@@ -103,6 +105,13 @@ async def on_startup():
 
     init_db()
 
+    # Run idempotent column migrations (safe to run on every boot)
+    try:
+        from app.migrations import run as run_migrations
+        run_migrations()
+    except Exception as e:
+        logger.warning(f"Migration warning (non-fatal): {e}")
+
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -120,5 +129,10 @@ async def on_startup():
         logger.info(f"rwa-issuer-sim: {settings.RWA_ISSUER_URL}")
     else:
         logger.info("rwa-issuer-sim: disabled (RWA_ISSUER_URL not set) — property pool sync unavailable")
+
+    # Start the autonomous game runner background task
+    import asyncio
+    from app.services.sandbox_runner import start_runner
+    asyncio.create_task(start_runner())
 
     logger.info(f"Rentline Sandbox API v{settings.VERSION} started on {settings.HOST}:{settings.PORT}")

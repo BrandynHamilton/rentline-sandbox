@@ -59,6 +59,19 @@ export const ALL_TOOLS: ToolDef[] = [
         fed_meeting_interval: { type: "integer", description: "Fed meetings every N turns (0=disabled, default 6)" },
         fed_rate_current: { type: "number", description: "Starting Fed funds rate (default 0.055 = 5.5%)" },
         property_ids: { type: "array", items: { type: "string" }, description: "Specific property IDs to include (default: all active)" },
+        bots: {
+          type: "array",
+          description: "Bot players to add at creation. Each item: {display_name, strategy?, personality?}",
+          items: {
+            type: "object",
+            properties: {
+              display_name: { type: "string" },
+              strategy: { type: "string", enum: ["aggressive", "conservative", "balanced", "momentum", "income"] },
+              personality: { type: "string" },
+            },
+            required: ["display_name"],
+          },
+        },
       },
       required: ["name", "display_name"],
     },
@@ -283,6 +296,84 @@ export const ALL_TOOLS: ToolDef[] = [
         limit: { type: "integer", description: "Max entries for global leaderboard (default 50)" },
       },
       required: [],
+    },
+  },
+
+  // ── BOTS ─────────────────────────────────────────────────────────────────
+  {
+    name: "add_bot",
+    title: "Add Bot Player",
+    category: "game",
+    description:
+      "Add an LLM-driven bot player to a game that is still in lobby status. The bot will automatically make investment decisions each turn after advance_turn is called. Requires being the game host.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        game_id: { type: "string" },
+        display_name: { type: "string", description: "Bot's display name, e.g. 'Warren Buffett'" },
+        strategy: {
+          type: "string",
+          enum: ["aggressive", "conservative", "balanced", "momentum", "income"],
+          description: "Investment strategy persona for the bot (default: balanced)",
+        },
+        personality: {
+          type: "string",
+          maxLength: 80,
+          description: "Optional flavour description for the bot's character (max 80 chars)",
+        },
+      },
+      required: ["game_id", "display_name"],
+    },
+  },
+  {
+    name: "remove_bot",
+    title: "Remove Bot Player",
+    category: "game",
+    description:
+      "Remove a bot player from a game that is still in lobby status. Requires being the game host.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        game_id: { type: "string" },
+        bot_player_id: { type: "string", description: "The player_id of the bot to remove" },
+      },
+      required: ["game_id", "bot_player_id"],
+    },
+  },
+
+  // ── AUTONOMOUS MODE ───────────────────────────────────────────────────────
+  {
+    name: "start_autonomous",
+    title: "Start Autonomous Mode",
+    category: "game",
+    description:
+      "Enable autonomous mode on a game. The API will automatically advance turns at the specified interval until the game completes — no manual advance-turn calls needed. Perfect for all-bot games. Requires being the game host.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        game_id: { type: "string" },
+        delay_seconds: {
+          type: "integer",
+          description: "Seconds between automatic turn advances (5–3600, default 30)",
+          minimum: 5,
+          maximum: 3600,
+        },
+      },
+      required: ["game_id"],
+    },
+  },
+  {
+    name: "stop_autonomous",
+    title: "Stop Autonomous Mode",
+    category: "game",
+    description:
+      "Disable autonomous mode. The game pauses and waits for manual advance-turn calls. Requires being the game host.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        game_id: { type: "string" },
+      },
+      required: ["game_id"],
     },
   },
 ];

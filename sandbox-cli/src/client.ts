@@ -113,6 +113,18 @@ export function createClient(opts: RequestOptions) {
       r<SyncResult>("POST", "/api/sandbox/properties/sync"),
     mintTusdc: (gameId: string, playerId: string, amount: number) =>
       r<MintResult>("POST", `/api/sandbox/games/${gameId}/mint-tusdc`, { player_id: playerId, amount }),
+
+    // ── Bots ─────────────────────────────────────────────────────────────────
+    addBot: (gameId: string, body: AddBotBody) =>
+      r<BotResult>("POST", `/api/sandbox/games/${gameId}/bots`, body),
+    removeBot: (gameId: string, botPlayerId: string) =>
+      r<void>("DELETE", `/api/sandbox/games/${gameId}/bots/${botPlayerId}`),
+
+    // ── Autonomous mode ───────────────────────────────────────────────────────
+    startAutonomous: (gameId: string, delaySeconds?: number) =>
+      r<AutonomousResult>("POST", `/api/sandbox/games/${gameId}/autonomous`, { delay_seconds: delaySeconds ?? 30 }),
+    stopAutonomous: (gameId: string) =>
+      r<AutonomousResult>("DELETE", `/api/sandbox/games/${gameId}/autonomous`),
   };
 }
 
@@ -187,6 +199,7 @@ export interface CreateGameBody {
   property_ids?: string[]; ltv_limit?: number;
   default_rate_type?: string; amortizing?: boolean;
   fed_meeting_interval?: number; fed_rate_current?: number;
+  bots?: Array<{ display_name: string; strategy?: string; personality?: string }>;
 }
 export interface JoinBody { invite_code: string; display_name: string; wallet_address?: string; }
 export interface JoinResult { player_id: string; game_id: string; invite_code: string; }
@@ -201,3 +214,6 @@ export interface HelocDrawBody { property_id: string; draw_amount: number; }
 export interface HelocRepayBody { property_id: string; repay_amount: number; }
 export interface SyncResult { created: number; updated: number; skipped: number; }
 export interface MintResult { player_id: string; usdc_balance: number; }
+export interface AddBotBody { display_name: string; strategy?: string; personality?: string; }
+export interface BotResult { player_id: string; display_name: string; strategy: string; personality: string | null; is_bot: true; }
+export interface AutonomousResult { game_id: string; auto_advance: boolean; auto_advance_delay_seconds: number; status: string; current_turn: number; max_turns: number; message: string; }

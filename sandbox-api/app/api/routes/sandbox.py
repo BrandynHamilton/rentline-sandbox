@@ -43,6 +43,7 @@ from app.api.deps import get_db, is_admin_request
 from app.core.logging import logger
 from app.services import sandbox_service
 from app.services.sandbox_engine import advance_turn
+from app.services import sandbox_bot
 
 router = APIRouter(prefix="/sandbox", tags=["sandbox"])
 
@@ -96,6 +97,20 @@ class CreateGameRequest(BaseModel):
     fed_cut_prob: float = Field(0.25, ge=0.0, le=1.0)
     fed_move_magnitude_min: float = Field(0.0025, ge=0.0, le=0.02)
     fed_move_magnitude_max: float = Field(0.0050, ge=0.0, le=0.05)
+    # Bot players to add at game creation
+    bots: list["BotSpec"] | None = Field(
+        None,
+        description="Optional list of bot players to add immediately after game creation."
+    )
+
+
+class BotSpec(BaseModel):
+    display_name: str = Field(..., min_length=1, max_length=40)
+    strategy: str = Field("balanced")
+    personality: str | None = None
+
+
+CreateGameRequest.model_rebuild()
 
 
 class JoinGameRequest(BaseModel):
@@ -137,6 +152,25 @@ class HelocRepayRequest(BaseModel):
     repay_amount: float = Field(..., gt=0)
 
 
+class AddBotRequest(BaseModel):
+    display_name: str = Field(..., min_length=1, max_length=40)
+    strategy: str = Field(
+        "balanced",
+        description="Bot investment strategy: aggressive | conservative | balanced | momentum | income"
+    )
+    personality: str | None = Field(
+        None, max_length=80,
+        description="Optional flavour name for the bot, e.g. 'Warren Buffett'"
+    )
+
+
+class AutonomousRequest(BaseModel):
+    delay_seconds: int = Field(
+        30, ge=5, le=3600,
+        description="Seconds between automatic turn advances (5–3600, default 30)"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Game lifecycle
 # ---------------------------------------------------------------------------
@@ -176,6 +210,19 @@ async def create_game(
         )
     except ValueError as e:
         raise _service_error(e)
+
+    # Optionally seed bot players in the same request
+    if body.bots:
+        for spec in body.bots:
+            try:
+                sandbox_bot.add_bot(
+                    db, game,
+                    display_name=spec.display_name,
+                    strategy=spec.strategy,
+                    personality=spec.personality,
+                )
+            except ValueError as e:
+                raise _service_error(e)
 
     return _game_response(db, game)
 
@@ -283,6 +330,9 @@ async def advance_game_turn(
     except Exception as e:
         logger.error(f"advance_turn failed for game {game_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Turn advance failed — try again")
+
+    # Run all bot players now that the trade window is open
+    sandbox_bot.run_all_bots(db, game)
 
     return {
         "game_id": game.id,
@@ -430,6 +480,195 @@ async def mint_tusdc(
     except ValueError as e:
         raise _service_error(e)
     return {"player_id": player.id, "usdc_balance": player.usdc_balance}
+
+
+# ---------------------------------------------------------------------------
+# Bot players
+# ---------------------------------------------------------------------------
+
+@router.post("/games/{game_id}/bots", status_code=201)
+async def add_bot(
+    game_id: str,
+    body: AddBotRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Add an LLM-driven bot player to a game (lobby status only).
+    Requires admin key or the game host's Clerk session.
+    """
+    game = sandbox_service.get_game(db, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Allow host or admin
+    clerk_user_id = _optional_clerk_id(request)
+    is_admin = is_admin_request(request)
+    if not is_admin:
+        if not clerk_user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        from app.models.sandbox import SandboxPlayer
+        host = db.query(SandboxPlayer).filter(
+            SandboxPlayer.game_id == game_id,
+            SandboxPlayer.clerk_user_id == clerk_user_id,
+            SandboxPlayer.is_host == True,
+        ).first()
+        if not host:
+            raise HTTPException(status_code=403, detail="Only the game host can add bots")
+
+    try:
+        bot = sandbox_bot.add_bot(
+            db, game,
+            display_name=body.display_name,
+            strategy=body.strategy,
+            personality=body.personality,
+        )
+    except ValueError as e:
+        raise _service_error(e)
+
+    return {
+        "player_id": bot.id,
+        "display_name": bot.display_name,
+        "strategy": bot.bot_strategy,
+        "personality": bot.bot_personality,
+        "is_bot": True,
+    }
+
+
+@router.delete("/games/{game_id}/bots/{bot_player_id}", status_code=204)
+async def remove_bot(
+    game_id: str,
+    bot_player_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Remove a bot player from a game (lobby only). Host or admin."""
+    game = sandbox_service.get_game(db, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    clerk_user_id = _optional_clerk_id(request)
+    is_admin = is_admin_request(request)
+    if not is_admin:
+        if not clerk_user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        from app.models.sandbox import SandboxPlayer
+        host = db.query(SandboxPlayer).filter(
+            SandboxPlayer.game_id == game_id,
+            SandboxPlayer.clerk_user_id == clerk_user_id,
+            SandboxPlayer.is_host == True,
+        ).first()
+        if not host:
+            raise HTTPException(status_code=403, detail="Only the game host can remove bots")
+
+    try:
+        sandbox_bot.remove_bot(db, game_id, bot_player_id)
+    except ValueError as e:
+        raise _service_error(e)
+
+
+# ---------------------------------------------------------------------------
+# Autonomous mode
+# ---------------------------------------------------------------------------
+
+@router.post("/games/{game_id}/autonomous", status_code=200)
+async def start_autonomous(
+    game_id: str,
+    body: AutonomousRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Enable autonomous mode. The game will advance turns automatically at the
+    specified interval without requiring manual advance-turn calls.
+
+    The caller must be the game host or an admin.
+    All human players are immediately marked ready so the first turn advances
+    without waiting.
+
+    Typically used with all-bot games: create a game with bots, then call this
+    to let it play to completion hands-free.
+    """
+    from app.services import sandbox_runner
+
+    game = sandbox_service.get_game(db, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    clerk_user_id = _optional_clerk_id(request)
+    is_admin = is_admin_request(request)
+    if not is_admin:
+        if not clerk_user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        from app.models.sandbox import SandboxPlayer
+        host = db.query(SandboxPlayer).filter(
+            SandboxPlayer.game_id == game_id,
+            SandboxPlayer.clerk_user_id == clerk_user_id,
+            SandboxPlayer.is_host == True,
+        ).first()
+        if not host:
+            raise HTTPException(status_code=403, detail="Only the game host can enable autonomous mode")
+
+    try:
+        game = sandbox_runner.enable_autonomous(db, game_id, delay_seconds=body.delay_seconds)
+    except ValueError as e:
+        raise _service_error(e)
+
+    return {
+        "game_id": game.id,
+        "auto_advance": game.auto_advance,
+        "auto_advance_delay_seconds": game.auto_advance_delay_seconds,
+        "status": game.status,
+        "current_turn": game.current_turn,
+        "max_turns": game.max_turns,
+        "message": (
+            f"Autonomous mode enabled. Turns will advance every "
+            f"{game.auto_advance_delay_seconds}s until turn {game.max_turns}."
+        ),
+    }
+
+
+@router.delete("/games/{game_id}/autonomous", status_code=200)
+async def stop_autonomous(
+    game_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Disable autonomous mode. The game will pause and wait for manual advance-turn calls.
+    """
+    from app.services import sandbox_runner
+
+    game = sandbox_service.get_game(db, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    clerk_user_id = _optional_clerk_id(request)
+    is_admin = is_admin_request(request)
+    if not is_admin:
+        if not clerk_user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        from app.models.sandbox import SandboxPlayer
+        host = db.query(SandboxPlayer).filter(
+            SandboxPlayer.game_id == game_id,
+            SandboxPlayer.clerk_user_id == clerk_user_id,
+            SandboxPlayer.is_host == True,
+        ).first()
+        if not host:
+            raise HTTPException(status_code=403, detail="Only the game host can disable autonomous mode")
+
+    try:
+        game = sandbox_runner.disable_autonomous(db, game_id)
+    except ValueError as e:
+        raise _service_error(e)
+
+    return {
+        "game_id": game.id,
+        "auto_advance": game.auto_advance,
+        "status": game.status,
+        "current_turn": game.current_turn,
+        "message": "Autonomous mode disabled. Use advance-turn to continue manually.",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -594,6 +833,8 @@ def _game_summary(game) -> dict:
         "started_at": game.started_at.isoformat() if game.started_at else None,
         "ended_at": game.ended_at.isoformat() if game.ended_at else None,
         "created_at": game.created_at.isoformat(),
+        "auto_advance": getattr(game, "auto_advance", False),
+        "auto_advance_delay_seconds": getattr(game, "auto_advance_delay_seconds", 30),
     }
 
 
@@ -619,6 +860,9 @@ def _player_dict(p) -> dict:
         "wallet_address": p.wallet_address,
         "is_ready": p.is_ready,
         "is_host": p.is_host,
+        "is_bot": getattr(p, "is_bot", False),
+        "bot_strategy": getattr(p, "bot_strategy", None),
+        "bot_personality": getattr(p, "bot_personality", None),
         "joined_at": p.joined_at.isoformat(),
     }
 
