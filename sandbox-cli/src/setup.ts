@@ -178,13 +178,18 @@ async function installForClient(
         patchMcpJson(file, "rentline-sandbox", entry, "mcpServers");
         console.log(`Patched ${file}`);
       }
-      // Install SKILL.md
-      const skillDir = join(homedir(), ".claude", "skills", "rentline-sandbox");
+      // Install SKILL.md — claude-compat path (~/.claude/skills/) and agent-compat (~/.agents/skills/)
       const skillSrc = join(__dirname, "../SKILL.md");
       if (existsSync(skillSrc)) {
-        mkdirSync(skillDir, { recursive: true });
-        copyFileSync(skillSrc, join(skillDir, "SKILL.md"));
-        console.log(`SKILL.md installed to ${skillDir}`);
+        const targets = [
+          join(homedir(), ".claude", "skills", "rentline-sandbox"),
+          join(homedir(), ".agents", "skills", "rentline-sandbox"),
+        ];
+        for (const dir of targets) {
+          mkdirSync(dir, { recursive: true });
+          copyFileSync(skillSrc, join(dir, "SKILL.md"));
+          console.log(`SKILL.md → ${dir}`);
+        }
       }
       break;
     }
@@ -211,11 +216,30 @@ async function installForClient(
       break;
     }
     case "opencode": {
+      // Patch MCP config
       const file = scope === "project"
         ? join(process.cwd(), "opencode.json")
         : join(homedir(), ".config", "opencode", "config.json");
       patchMcpJson(file, "rentline-sandbox", entry, "mcp");
       console.log(`Patched ${file}`);
+
+      // Install SKILL.md to all three locations OpenCode auto-discovers:
+      //   ~/.config/opencode/skills/rentline-sandbox/SKILL.md  (global, opencode-native)
+      //   ~/.claude/skills/rentline-sandbox/SKILL.md           (global, claude-compat)
+      //   ~/.agents/skills/rentline-sandbox/SKILL.md           (global, agent-compat)
+      const skillSrc = join(__dirname, "../SKILL.md");
+      if (existsSync(skillSrc)) {
+        const targets = [
+          join(homedir(), ".config", "opencode", "skills", "rentline-sandbox"),
+          join(homedir(), ".claude", "skills", "rentline-sandbox"),
+          join(homedir(), ".agents", "skills", "rentline-sandbox"),
+        ];
+        for (const dir of targets) {
+          mkdirSync(dir, { recursive: true });
+          copyFileSync(skillSrc, join(dir, "SKILL.md"));
+          console.log(`SKILL.md → ${dir}`);
+        }
+      }
       break;
     }
     case "zed":

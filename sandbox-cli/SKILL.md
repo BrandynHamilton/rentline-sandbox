@@ -5,27 +5,12 @@ description: |
   Players compete over tokenised properties using simulated tUSDC, with mortgages,
   Fed rate cycles, and macro events (recession, disaster, tax hike, rent control, etc.)
   reflecting real market dynamics. Use these tools to play, observe, and analyse games.
-user-invocable: true
-argument-hint: "[api-key]"
-triggers:
-  - sandbox game
-  - real estate simulation
-  - property tokens
-  - buy property tokens
-  - sell property tokens
-  - originate mortgage
-  - HELOC
-  - cash-out refi
-  - game leaderboard
-  - advance turn
-  - Fed rate
-  - macro event
-  - recession event
-  - portfolio NAV
-  - debt service
-  - ARM rate
-  - game feed
-  - turn event
+  TRIGGERS: sandbox game, real estate simulation, property tokens, buy property tokens,
+  sell property tokens, originate mortgage, HELOC, cash-out refi, game leaderboard,
+  advance turn, Fed rate, macro event, recession event, portfolio NAV, debt service,
+  ARM rate, game feed, turn event, leveraged real estate, property investment game
+license: MIT
+compatibility: opencode
 ---
 
 # Rentline Sandbox
