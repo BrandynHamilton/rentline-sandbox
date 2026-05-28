@@ -1,0 +1,54 @@
+# Rentline Sandbox
+
+Real estate investment simulation game engine. Turn-based multiplayer — players compete over tokenised properties using simulated tUSDC with mortgages, Fed rate cycles, and macro events.
+
+## MCP server
+
+```
+npx rentline-sandbox
+```
+
+Exposes 17 tools via stdio JSON-RPC.
+
+## Setup
+
+```
+npx rentline-sandbox setup
+```
+
+## Tools
+
+- list_games — list open game rooms
+- get_game — full game state
+- create_game — create a game with mortgage/Fed config
+- join_game — join via invite code
+- mark_ready — toggle ready state
+- advance_turn — host: run all 7 engine phases
+- get_feed — turn event stream (Fed, macro, rent, price moves, debt service)
+- list_properties — active property pool
+- get_fed_history — FOMC decision log
+- buy_tokens — all-cash token purchase
+- sell_tokens — sell tokens
+- originate_mortgage — leveraged acquisition (LTV-limited)
+- refi_mortgage — rate-and-term or cash-out refi
+- heloc_draw — home equity line of credit
+- heloc_repay — repay HELOC balance
+- get_debt — debt summary: balances, LTV, arrears
+- get_portfolio — NAV, P&L, leverage ratio, holdings
+- get_leaderboard — in-game or global leaderboard
+
+## CLI
+
+```
+sandbox auth login --key <key>
+sandbox game list | create | join | advance | feed | leaderboard | fed
+sandbox trade buy | sell
+sandbox portfolio <game-id> <player-id>
+sandbox mortgage buy | refi | heloc | repay | list
+sandbox admin properties list | sync
+sandbox admin mint
+```
+
+## Docs
+
+https://github.com/your-org/rentline-sandbox

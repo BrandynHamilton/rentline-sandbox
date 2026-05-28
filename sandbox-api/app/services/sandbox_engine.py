@@ -128,6 +128,8 @@ _FED_WARNING_STATEMENTS = [
     "Central bank meeting imminent — rate move possible.",
     "Upcoming Fed meeting: economists forecast {cut_prob:.0%} probability of cut.",
 ]
+
+_MACRO_CATALOGUE = [
     {
         "macro_type": "RECESSION",
         "prob": 0.06,
