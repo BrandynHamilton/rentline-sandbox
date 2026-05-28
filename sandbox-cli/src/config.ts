@@ -11,7 +11,7 @@
  *   }
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync, unlinkSync } from "fs";
 import { homedir } from "os";
 import { join, dirname } from "path";
 
@@ -56,10 +56,7 @@ export function saveConfig(cfg: SandboxConfig): void {
 }
 
 export function deleteConfig(): void {
-  try {
-    const { unlinkSync } = await import("fs") as never as typeof import("fs");
-    unlinkSync(CONFIG_FILE);
-  } catch {}
+  try { unlinkSync(CONFIG_FILE); } catch {}
 }
 
 export function getApiUrl(override?: string): string {
