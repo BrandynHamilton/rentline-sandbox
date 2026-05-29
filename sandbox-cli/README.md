@@ -21,6 +21,34 @@ Exposes all 18 game actions as an [MCP](https://modelcontextprotocol.io) server 
 
 ## Installation
 
+### Docker (recommended — no Node.js required)
+
+```bash
+# Build the image once from the repo root
+docker compose build sandbox-cli
+
+# Or build directly
+docker build -t sandbox-cli ./sandbox-cli
+```
+
+Run CLI commands:
+```bash
+docker run --rm -it \
+  -e SANDBOX_API_URL=http://host.docker.internal:6532 \
+  -e SANDBOX_API_KEY=your-api-key \
+  sandbox-cli game list
+```
+
+Run as MCP stdio server:
+```bash
+docker run --rm -i \
+  -e SANDBOX_API_URL=http://host.docker.internal:6532 \
+  -e SANDBOX_API_KEY=your-api-key \
+  sandbox-cli
+```
+
+> **`host.docker.internal`** resolves to your host machine from inside a container on Docker Desktop (Mac/Windows). On Linux use `--network host` and `http://localhost:6532` instead.
+
 ### From source (this repo)
 
 ```bash
@@ -53,12 +81,13 @@ npx rentline-sandbox
 
 The MCP server communicates over stdio JSON-RPC. Configure it in your AI client once and it will be available in every session.
 
-**Important:** The server process must stay alive — do not wrap the command in a shell that exits immediately. Use `node <path>` directly, not a `.cmd` shim or shell script, to avoid Windows file-association issues.
+**Important:** The server process must stay alive — do not wrap the command in a shell that exits immediately. Use `node <path>` or `docker run -i` directly.
 
 ### OpenCode
 
 Add to `opencode.json` in your project root (recommended) or `~/.config/opencode/config.json` (global):
 
+**Via Node (from source):**
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
@@ -76,9 +105,27 @@ Add to `opencode.json` in your project root (recommended) or `~/.config/opencode
 }
 ```
 
+**Via Docker:**
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "rentline-sandbox": {
+      "type": "local",
+      "command": ["docker", "run", "--rm", "-i",
+        "-e", "SANDBOX_API_URL=http://host.docker.internal:6532",
+        "-e", "SANDBOX_API_KEY=your-api-key",
+        "sandbox-cli"
+      ],
+      "enabled": true
+    }
+  }
+}
+```
+
 > **`type` and `command` as an array are required.** OpenCode's schema does not accept the `command`/`args`/`env` format used by other clients.
 >
-> **Use an absolute path.** OpenCode runs from a varying working directory, so relative paths will fail.
+> **Use an absolute path** for the Node variant. OpenCode runs from a varying working directory, so relative paths will fail.
 >
 > **Windows paths:** Use either forward slashes (`C:/path/...`) or escaped backslashes (`C:\\path\\...`).
 
@@ -90,6 +137,7 @@ opencode mcp list
 
 ### Claude Code
 
+**Via Node:**
 ```bash
 claude mcp add rentline-sandbox --scope user \
   -e SANDBOX_API_KEY=your-api-key \
@@ -97,8 +145,18 @@ claude mcp add rentline-sandbox --scope user \
   -- node /absolute/path/to/sandbox-cli/dist/index.js
 ```
 
+**Via Docker:**
+```bash
+claude mcp add rentline-sandbox --scope user \
+  -- docker run --rm -i \
+    -e SANDBOX_API_URL=http://host.docker.internal:6532 \
+    -e SANDBOX_API_KEY=your-api-key \
+    sandbox-cli
+```
+
 ### Cursor (`.cursor/mcp.json`)
 
+**Via Node:**
 ```json
 {
   "mcpServers": {
@@ -109,6 +167,23 @@ claude mcp add rentline-sandbox --scope user \
         "SANDBOX_API_KEY": "your-api-key",
         "SANDBOX_API_URL": "http://localhost:6532"
       }
+    }
+  }
+}
+```
+
+**Via Docker:**
+```json
+{
+  "mcpServers": {
+    "rentline-sandbox": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "SANDBOX_API_URL=http://host.docker.internal:6532",
+        "-e", "SANDBOX_API_KEY=your-api-key",
+        "sandbox-cli"
+      ]
     }
   }
 }
@@ -116,6 +191,7 @@ claude mcp add rentline-sandbox --scope user \
 
 ### Windsurf (`~/.codeium/windsurf/mcp_config.json`)
 
+**Via Node:**
 ```json
 {
   "mcpServers": {
@@ -130,6 +206,31 @@ claude mcp add rentline-sandbox --scope user \
   }
 }
 ```
+
+**Via Docker:**
+```json
+{
+  "mcpServers": {
+    "rentline-sandbox": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "SANDBOX_API_URL=http://host.docker.internal:6532",
+        "-e", "SANDBOX_API_KEY=your-api-key",
+        "sandbox-cli"
+      ]
+    }
+  }
+}
+```
+
+### Docker networking note
+
+| Host OS | `SANDBOX_API_URL` value |
+|---|---|
+| Mac / Windows (Docker Desktop) | `http://host.docker.internal:6532` |
+| Linux | `http://localhost:6532` with `--network host` added to `docker run` |
+| API also in Docker Compose | `http://sandbox-api:6532` with `--network rentline-sandbox_default` added |
 
 ---
 
@@ -138,6 +239,16 @@ claude mcp add rentline-sandbox --scope user \
 All commands read saved credentials from `~/.rentline-sandbox/credentials.json`. Authenticate once with `auth login`, then every other command picks it up automatically. You can always override with `--url` and `--api-key` flags on any command.
 
 If you ran `npm link` (or installed globally), use `sandbox <command>`. Otherwise substitute `node dist/index.js` for `sandbox`.
+
+**Via Docker**, prefix any command with:
+```bash
+docker run --rm -it \
+  -e SANDBOX_API_URL=http://host.docker.internal:6532 \
+  -e SANDBOX_API_KEY=your-api-key \
+  sandbox-cli <command>
+```
+
+For brevity, the examples below use `sandbox <command>`. All work identically via Docker.
 
 ### Auth
 

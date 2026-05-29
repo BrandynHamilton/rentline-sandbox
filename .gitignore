@@ -32,3 +32,8 @@ uv.lock
 
 # OpenCode project config (contains absolute paths and API keys)
 opencode.json
+
+notes.txt
+
+# Akash deployment manifest (contains secrets)
+akash.yml

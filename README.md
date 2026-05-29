@@ -356,7 +356,7 @@ Every setting below can be passed to `create_game`. All have sane defaults — y
 
 The `sandbox-cli` package exposes all game actions as an MCP server over stdio, making the game directly playable by AI agents in OpenCode, Claude Code, Cursor, and Windsurf.
 
-### OpenCode (`opencode.json`)
+### OpenCode (`opencode.json`) — via Node
 
 ```json
 {
@@ -375,7 +375,26 @@ The `sandbox-cli` package exposes all game actions as an MCP server over stdio, 
 }
 ```
 
-> Use an absolute path. Use forward slashes or escaped backslashes on Windows. Do not use `npx` here — OpenCode requires `type: "local"` with an array command.
+### OpenCode (`opencode.json`) — via Docker
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "rentline-sandbox": {
+      "type": "local",
+      "command": ["docker", "run", "--rm", "-i",
+        "-e", "SANDBOX_API_URL=http://host.docker.internal:6532",
+        "-e", "SANDBOX_API_KEY=your-api-key",
+        "sandbox-cli"
+      ],
+      "enabled": true
+    }
+  }
+}
+```
+
+> `type: "local"` and `command` as an array are required by OpenCode. Use an absolute path for the Node variant. For Docker, `host.docker.internal` resolves to your host machine on Mac/Windows; use `--network host` + `localhost` on Linux.
 
 ### Available MCP tools
 
@@ -469,25 +488,54 @@ rentline-sandbox/
 
 ## Quick start
 
+### Docker (all services)
+
 ```bash
 cp .env.example .env
 # Fill in CLERK_SECRET_KEY, CLERK_JWKS_URL, CLERK_ISSUER
 # Optionally: OPENAI_API_KEY for LLM-driven bots
 
-# API (Docker — recommended)
+# Start API + web
 docker compose up --build
 
-# API (local dev)
+# API:  http://localhost:6532
+# Web:  http://localhost:3001
+# Docs: http://localhost:6532/docs
+```
+
+Run CLI commands via Docker (no Node.js needed):
+```bash
+docker compose build sandbox-cli   # build once
+
+docker compose run --rm sandbox-cli auth login --key <your-api-key>
+docker compose run --rm sandbox-cli game list
+docker compose run --rm sandbox-cli game create --name "Test" --display-name "Alice"
+```
+
+Use as an MCP server via Docker (add to your AI client config):
+```bash
+docker run --rm -i \
+  -e SANDBOX_API_URL=http://host.docker.internal:6532 \
+  -e SANDBOX_API_KEY=your-api-key \
+  sandbox-cli
+```
+
+### Local dev
+
+```bash
+cp .env.example .env
+
+# API
 cd sandbox-api
 uv sync
 uv run uvicorn app.main:app --reload --port 6532
 
-# Web
+# Web (separate terminal)
 cd sandbox-web
 npm install
 npm run dev   # http://localhost:3001
 
-# CLI
+# CLI (separate terminal)
 cd sandbox-cli
 npm install && npm run build && npm link
 sandbox auth login --key <your-api-key>
@@ -505,8 +553,8 @@ docker compose exec sandbox-api uv run python -c "from app.migrations import run
 
 ## Deployment
 
-- **API**: `docker compose up` on any VPS or container host. Set `ALLOWED_ORIGINS=https://sandbox.rentline.xyz`. Port 6532.
-- **Web**: Vercel, pointing at `sandbox-web/`. Env vars: `NEXT_PUBLIC_SANDBOX_API_URL`, Clerk keys.
-- **DNS**: `sandbox.rentline.xyz` → CNAME `cname.vercel-dns.com`.
+- **API + Web**: `docker compose up --build` on any VPS. Set `ALLOWED_ORIGINS=https://sandbox.rentline.xyz` and `NEXT_PUBLIC_SANDBOX_API_URL=https://api.sandbox.rentline.xyz`.
+- **Web (Vercel alternative)**: Point a Vercel project at `sandbox-web/`. Build args: `NEXT_PUBLIC_SANDBOX_API_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+- **DNS**: `sandbox.rentline.xyz` → CNAME `cname.vercel-dns.com` (Vercel) or your VPS IP.
 - **Shared auth**: The sandbox shares the same Clerk application as Rentline — users sign in once and both apps recognise the session.
 - **Rentline bridge**: Set `RENTLINE_API_URL` + `RENTLINE_SANDBOX_BRIDGE_KEY` to write simulated rent payments into the real Rentline ledger dashboard. Leave blank to disable.

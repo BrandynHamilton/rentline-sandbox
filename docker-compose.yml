@@ -1,4 +1,6 @@
 services:
+
+  # ── API ───────────────────────────────────────────────────────────────────
   sandbox-api:
     build:
       context: ./sandbox-api
@@ -10,6 +12,56 @@ services:
     volumes:
       - sandbox_data:/app/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6532/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # ── Web ───────────────────────────────────────────────────────────────────
+  sandbox-web:
+    build:
+      context: ./sandbox-web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SANDBOX_API_URL: ${NEXT_PUBLIC_SANDBOX_API_URL:-http://localhost:6532}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_SANDBOX_API_URL: ${NEXT_PUBLIC_SANDBOX_API_URL:-http://sandbox-api:6532}
+    depends_on:
+      sandbox-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ── CLI / MCP ─────────────────────────────────────────────────────────────
+  # Not started by default (profiles: cli) — run on demand:
+  #   docker compose run --rm sandbox-cli game list
+  #   docker compose run --rm -i sandbox-cli          # MCP stdio mode
+  sandbox-cli:
+    build:
+      context: ./sandbox-cli
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      SANDBOX_API_URL: ${SANDBOX_API_URL:-http://sandbox-api:6532}
+      SANDBOX_API_KEY: ${SANDBOX_API_KEY:-}
+    depends_on:
+      - sandbox-api
+    profiles:
+      - cli
+    # No restart — CLI is run on demand, not a long-running service
 
 volumes:
   sandbox_data:
