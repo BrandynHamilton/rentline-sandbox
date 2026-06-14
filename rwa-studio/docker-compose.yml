@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: rwa-issuer-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./metadata:/app/metadata
+      - ./contracts:/app/contracts:ro
+    environment:
+      DEBUG: "false"
+      METADATA_DIR: /app/metadata
+      TOKEN_URI_BASE: ${TOKEN_URI_BASE:-http://localhost:8000/metadata/}
+      DATABASE_URL: sqlite:////app/data/rwa_issuer.db
+      AVALANCHE_RPC_URL: ${AVALANCHE_RPC_URL:-https://api.avax-test.network/ext/bc/C/rpc}
+      AVALANCHE_CHAIN_ID: ${AVALANCHE_CHAIN_ID:-43113}
+      AVALANCHE_PRIVATE_KEY: ${AVALANCHE_PRIVATE_KEY}
+      X402_PRIVATE_KEY: ${X402_PRIVATE_KEY:-}
+      ZILLOW_API_KEY: ${ZILLOW_API_KEY:-}
+      ATTOM_API_KEY: ${ATTOM_API_KEY:-}
+      RENTLINE_URL: ${RENTLINE_URL:-}
+      RENTLINE_ADMIN_API_KEY: ${RENTLINE_ADMIN_API_KEY:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      # Factory addresses — auto-loaded from broadcast if not set here
+      PROPERTY_TOKEN_FACTORY_ADDRESS: ${PROPERTY_TOKEN_FACTORY_ADDRESS:-}
+      SECURITY_TOKEN_FACTORY_ADDRESS: ${SECURITY_TOKEN_FACTORY_ADDRESS:-}
+      CRE_FACTORY_ADDRESS: ${CRE_FACTORY_ADDRESS:-}
+      NFT_TOKEN_FACTORY_ADDRESS: ${NFT_TOKEN_FACTORY_ADDRESS:-}
+      PROPERTY_LLC_FACTORY_ADDRESS: ${PROPERTY_LLC_FACTORY_ADDRESS:-}
+      INVESTOR_REGISTRY_FACTORY_ADDRESS: ${INVESTOR_REGISTRY_FACTORY_ADDRESS:-}
+      GOVERNANCE_FACTORY_ADDRESS: ${GOVERNANCE_FACTORY_ADDRESS:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-43113}
+    container_name: rwa-issuer-frontend
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  data:
+  metadata:

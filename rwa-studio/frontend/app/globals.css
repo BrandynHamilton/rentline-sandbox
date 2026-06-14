@@ -1,0 +1,119 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius, 0.75rem) * 0.6);
+  --radius-md: calc(var(--radius, 0.75rem) * 0.8);
+  --radius-lg: var(--radius, 0.75rem);
+  --radius-xl: calc(var(--radius, 0.75rem) * 1.4);
+}
+
+:root {
+  /* ── Surfaces — light theme (matching Rentline core frontend) ─────────── */
+  --color-surface:        oklch(90.5% 0.011 220);
+  --color-surface-raised: oklch(92% 0.010 218);
+  --color-surface-page:   oklch(89% 0.014 222);
+  --color-surface-sunken: oklch(86% 0.016 224);
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --color-text:           oklch(14% 0.022 268);
+  --color-text-secondary: oklch(36% 0.018 250);
+  --color-text-muted:     oklch(40% 0.014 250);
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --color-border-soft:   oklch(85% 0.012 222);
+  --color-border:        oklch(82% 0.014 222);
+  --color-border-strong: oklch(74% 0.016 220);
+
+  /* ── Crimson — action / urgency ──────────────────────────────────────── */
+  --color-crimson:        oklch(32% 0.19 27);
+  --color-crimson-bright: oklch(42% 0.21 27);
+  --color-crimson-dim:    oklch(26% 0.15 27);
+  --color-crimson-bg:     oklch(94% 0.022 20);
+  --color-crimson-border: oklch(82% 0.055 20);
+
+  /* ── Deep blue — flow / structure ────────────────────────────────────── */
+  --color-blue:           oklch(37% 0.14 254);
+  --color-blue-bright:    oklch(48% 0.16 254);
+  --color-blue-dim:       oklch(28% 0.11 254);
+  --color-blue-bg:        oklch(92% 0.018 242);
+  --color-blue-border:    oklch(80% 0.050 246);
+
+  /* ── Mid gray ────────────────────────────────────────────────────────── */
+  --color-mid:       oklch(59% 0.007 115);
+  --color-mid-soft:  oklch(79% 0.006 130);
+
+  /* ── shadcn token mapping ────────────────────────────────────────────── */
+  --background:          oklch(89% 0.014 222);
+  --foreground:          oklch(14% 0.022 268);
+  --card:                oklch(90.5% 0.011 220);
+  --card-foreground:     oklch(14% 0.022 268);
+  --popover:             oklch(92% 0.010 218);
+  --popover-foreground:  oklch(14% 0.022 268);
+  --primary:             oklch(32% 0.19 27);
+  --primary-foreground:  oklch(97% 0.005 215);
+  --secondary:           oklch(37% 0.14 254);
+  --secondary-foreground: oklch(97% 0.005 215);
+  --muted:               oklch(86% 0.016 224);
+  --muted-foreground:    oklch(54% 0.010 230);
+  --accent:              oklch(92% 0.018 242);
+  --accent-foreground:   oklch(37% 0.14 254);
+  --destructive:         oklch(42% 0.21 27);
+  --border:              oklch(82% 0.014 222);
+  --input:               oklch(86% 0.016 224);
+  --ring:                oklch(37% 0.14 254);
+  --radius: 0.75rem;
+
+  /* ── Sidebar — cool gray slightly darker than page ───────────────────── */
+  --sidebar:                    oklch(86% 0.016 224);
+  --sidebar-foreground:         oklch(14% 0.022 268);
+  --sidebar-primary:            oklch(32% 0.19 27);
+  --sidebar-primary-foreground: oklch(97% 0.005 215);
+  --sidebar-accent:             oklch(90% 0.013 220);
+  --sidebar-accent-foreground:  oklch(37% 0.14 254);
+  --sidebar-border:             oklch(82% 0.014 222);
+  --sidebar-ring:               oklch(37% 0.14 254);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

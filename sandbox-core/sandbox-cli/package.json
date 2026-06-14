@@ -1,0 +1,66 @@
+{
+  "name": "rentline-sandbox",
+  "version": "0.1.10",
+  "description": "CLI and MCP server for the Rentline Sandbox real estate investment simulation game",
+  "type": "module",
+  "bin": {
+    "sandbox": "dist/index.js",
+    "sandbox-mcp": "dist/server.js",
+    "rentline-sandbox": "dist/server.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./server": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "SKILL.md",
+    "llms.txt",
+    "README.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
+    "commander": "^13.0.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Brandyn Hamilton",
+  "homepage": "https://sandbox.rentline.xyz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrandynHamilton/rentline-sandbox.git",
+    "directory": "sandbox-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/BrandynHamilton/rentline-sandbox/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "rentline",
+    "sandbox",
+    "real-estate",
+    "simulation",
+    "mcp",
+    "cli",
+    "model-context-protocol",
+    "ai-agent",
+    "game"
+  ]
+}

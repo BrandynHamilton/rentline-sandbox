@@ -1,0 +1,23 @@
+services:
+
+  # ── API ───────────────────────────────────────────────────────────────────
+  sandbox-api:
+    build:
+      context: ./sandbox-api
+      dockerfile: Dockerfile
+    ports:
+      - "6532:6532"
+    env_file:
+      - .env
+    volumes:
+      - sandbox_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6532/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  sandbox_data:

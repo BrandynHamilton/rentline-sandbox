@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+data/
+*.db
+*.sqlite3
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uv
+uv.lock
+
+# OpenCode project config (contains absolute paths and API keys)
+opencode.json
+
+notes.txt
+server.log
+
+# Akash deployment manifest
+akash.yml
+
+# Deprecated frontend (replaced by sandbox-frontend)
+sandbox-web/
+
+# Stray markdown (agent/tool artefacts — not docs)
+AGENTS.md
+CLAUDE.md
+TODO.md
+QUICKSTART.md
+SYNDICATION.md

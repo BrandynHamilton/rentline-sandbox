@@ -1,0 +1,81 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Rentline Sandbox — Root .gitignore (monorepo)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.uv/
+.pytest_cache/
+.mypy_cache/
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+
+# ── Environment files (never commit secrets) ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+!*/.env.example
+
+# ── Databases ─────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# ── Foundry ───────────────────────────────────────────────────────────────────
+**/contracts/out/
+**/contracts/cache/
+**/contracts/lib/
+**/contracts/broadcast/*/31337/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+server.log
+
+# ── uv ────────────────────────────────────────────────────────────────────────
+uv.lock
+
+# ── Project config (contains absolute paths / API keys) ───────────────────────
+opencode.json
+notes.txt
+akash.yml
+
+# ── Stray markdown (agent/tool artefacts — not docs) ──────────────────────────
+AGENTS.md
+CLAUDE.md
+TODO.md
+QUICKSTART.md
+SYNDICATION.md
+
+# ── Metadata runtime output ───────────────────────────────────────────────────
+metadata/
+nul

@@ -1,0 +1,63 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Virtual envs / uv ─────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.uv/
+
+# ── Environment files (never commit secrets) ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+# Keep the example files
+!.env.example
+!frontend/.env.local.example
+
+# ── SQLite databases ──────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Runtime data directories ──────────────────────────────────────────────────
+data/
+metadata/
+
+# ── Foundry ───────────────────────────────────────────────────────────────────
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+# Keep broadcast files for named networks (Fuji, mainnet) for address tracking
+!contracts/broadcast/*/43113/
+!contracts/broadcast/*/43114/
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/out/
+frontend/.vercel/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*

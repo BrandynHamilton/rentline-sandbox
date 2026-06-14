@@ -1,0 +1,30 @@
+# Exclude heavy deps / build artifacts that don't belong in the Docker build context
+
+# Forge dependencies (OpenZeppelin etc.) — not needed; only contracts/src and contracts/out are used
+contracts/lib/
+contracts/cache/
+
+# Node modules
+frontend/node_modules/
+node_modules/
+
+# Python caches
+backend/__pycache__/
+**/__pycache__/
+**/*.pyc
+
+# Next.js build output (rebuilt inside Docker)
+frontend/.next/
+
+# Git
+.git/
+.gitignore
+
+# Local env overrides
+.env.local
+frontend/.env.local
+
+# Docs / notes
+docs/
+*.md
+notes.txt

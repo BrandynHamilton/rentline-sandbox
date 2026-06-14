@@ -1,0 +1,19 @@
+# Source — not needed at runtime
+src/
+tsconfig.json
+tsup.config.ts
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Sourcemaps — not useful to consumers
+dist/*.map
+
+# Dev/test artifacts
+node_modules/
+.env
+.env.*
+
+# Repo artifacts
+.gitignore

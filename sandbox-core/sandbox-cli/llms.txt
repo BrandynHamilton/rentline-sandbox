@@ -1,0 +1,78 @@
+# Rentline Sandbox
+
+Turn-based real estate investment simulation. Players compete over tokenised properties using
+simulated tUSDC with mortgages, Fed rate cycles, macro events, property condition grades,
+PACE liens, and investor tiers.
+
+## MCP server
+
+Command: sandbox-mcp
+Transport: stdio JSON-RPC (Model Context Protocol)
+
+Required env vars:
+- SANDBOX_API_URL — API base URL (e.g. https://sandbox-api.rentline.xyz)
+- SANDBOX_API_KEY — sb_ user key or admin key
+
+## 35 tools
+
+### Game management
+- list_games — list open game rooms (lobby/trading)
+- get_game — full game state: players, properties, turn, Fed rate, settings
+- create_game — create a game with full mortgage/Fed/grade config + optional bots
+- create_game_from_preset — one-call presets: quick, standard, leveraged, distressed, long_run
+- join_game — join via invite code
+- mark_ready — toggle ready state; game advances when all humans ready
+- advance_turn — host: run all 7 engine phases
+- get_feed — turn event stream (Fed, macro, rent, price moves, debt service, turn summary)
+- add_bot — add LLM bot to lobby (strategies: aggressive, conservative, balanced, momentum, income, value_add)
+- remove_bot — remove bot from lobby
+- start_autonomous — enable auto-advance (advances on all-ready or turn deadline)
+- stop_autonomous — pause auto-advance
+- set_delegate — opt in to agent delegation when idle
+- spectate — public game snapshot (no auth required)
+
+### Market & Intel
+- list_properties — active property pool with grades
+- get_market_summary — live cap rates, price delta this turn, grade, vacancy, mechanics lien status
+- get_fed_history — FOMC decision log with bps moves and mortgage rate impact
+- get_player_actions — human-readable transaction timeline for a player
+
+### Trading
+- buy_tokens — all-cash token purchase at current market price
+- sell_tokens — sell tokens (proceeds pay mechanics lien → first lien → HELOC/PACE before cash credited)
+
+### Debt
+- originate_mortgage — leveraged buy (tier-adjusted LTV and rate applied automatically)
+- refi_mortgage — rate-and-term or cash-out refi
+- heloc_draw — draw from home equity line of credit
+- heloc_repay — repay HELOC balance
+- prepay_principal — partial/full principal prepayment (works for first_lien, heloc, pace, mechanics_lien)
+- improve_property — cash-funded grade upgrade (cost = steps × 8% × price, price bumps 5%/step)
+- originate_pace_lien — financed grade upgrade, no down payment (rate = base + 1.5%)
+- get_debt — all active mortgages: balances, LTV, arrears, type
+
+### Portfolio
+- get_portfolio — NAV, holdings with grade/yield/turns_held, investor tier, leverage ratio
+- get_leaderboard — game or global leaderboard ranked by NAV with tier names
+
+## Turn phases (in order)
+1. fed_meeting — hike/cut/hold; FED_WARNING fires 1 turn before; ARMs reprice immediately
+2. macro_events — rate macros take effect (1-turn warning system); active macros tick down
+3. rent_collect — proportional to tokens; grade multipliers applied; vacancy blocks
+4. random_events — vacancy, lease renewal, capex, appreciation/depreciation (all grade-adjusted)
+5. market_move — applies price drift; optional live AVM blend
+6. debt_service — collect monthly payments; forced sale after 1 grace turn
+7. distribute — credits rent to balances; emits TURN_SUMMARY event
+
+## Property grades
+A (excellent) → B (good) → C (average) → D (below avg) → F (distressed)
+Grade affects: rent multiplier, appreciation probability/range, capex risk, vacancy probability.
+Upgrade via improve_property (cash) or originate_pace_lien (financed).
+
+## Investor tiers (live from NAV, auto-applied to mortgage terms)
+Retail (<$100k) → Accredited ($100k) → Professional ($500k) → Institutional ($2.5M) → Developer ($25M)
+Higher tiers: +5% LTV and -25bps rate per tier step.
+
+## Docs
+https://sandbox.rentline.xyz
+https://sandbox-api.rentline.xyz/docs

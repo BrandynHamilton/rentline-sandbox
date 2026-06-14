@@ -1,0 +1,46 @@
+/* Rentline brand palette — CSS custom properties used everywhere, never raw hex */
+
+:root {
+  /* ── Brand ── */
+  --color-red:        #8D0801;
+  --color-blue:       #004E89;
+  --color-navy:       #1D1E2C;
+  --color-gray:       #8B8C89;
+  --color-bg:         #E7ECEF;
+
+  /* ── Gray scale ── */
+  --color-gray-100:   #E7ECEF;
+  --color-gray-200:   #D5DADD;
+  --color-gray-300:   #C2C7CA;
+  --color-gray-400:   #AFB4B7;
+  --color-gray-500:   #8B8C89;
+
+  /* ── Semantic ── */
+  --color-positive:   #22c55e;
+  --color-negative:   #8D0801;
+  --color-warning:    #f59e0b;
+  --color-info:       #004E89;
+
+  /* ── Property grades ── */
+  --color-grade-a:    #22c55e;
+  --color-grade-b:    #84cc16;
+  --color-grade-c:    #f59e0b;
+  --color-grade-d:    #f97316;
+  --color-grade-f:    #8D0801;
+
+  /* ── Macro event severity ── */
+  --color-macro-danger:  #8D0801;
+  --color-macro-positive:#004E89;
+  --color-macro-warning: #f59e0b;
+  --color-macro-info:    #8B8C89;
+
+  /* ── Spacing / radii ── */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 2px 8px 0 rgba(29,30,44,0.08);
+  --shadow-modal: 0 8px 32px 0 rgba(29,30,44,0.18);
+}
